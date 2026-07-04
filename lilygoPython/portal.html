@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Gulliver Mission Control</title>
+    <style>
+        body {{ font-family: -apple-system, sans-serif; background: #121212; color: #E0E0E0; padding: 15px; margin: 0; }}
+        .header {{ border-bottom: 2px solid #29b6f6; padding-bottom: 10px; margin-bottom: 15px; }}
+        h1 {{ margin: 0; font-size: 20px; color: #fff; }}
+        .section-title {{ font-size: 13px; color: #29b6f6; font-weight: bold; text-transform: uppercase; margin: 15px 0 8px 0; letter-spacing: 0.5px; }}
+        .card {{ background: #1E1E1E; padding: 12px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); margin-bottom: 12px; }}
+        .form-group {{ display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #2A2A2A; }}
+        .form-group:last-child {{ border-bottom: none; }}
+        label {{ font-size: 14px; color: #B0B0B0; }}
+        
+        /* Fixed Input Box Styling for Mobile Safari */
+        select {{ background: #2D2D2D; color: #FFF; border: 1px solid #444; border-radius: 6px; padding: 6px; font-size: 14px; width: 50%; }}
+        input[type="text"] {{ 
+            background: #2D2D2D; color: #FFF; border: 1px solid #444; border-radius: 6px; 
+            padding: 8px; font-size: 14px; width: 50%; box-sizing: border-box; text-align: right;
+        }}
+        input[type="text"]:focus {{ border-color: #00e676; outline: none; }}
+        
+        /* Clean Native Checkbox Layout */
+        input[type="checkbox"] {{ width: 20px; height: 20px; accent-color: #00e676; }}
+        
+        .warning-banner {{ 
+            display: none; background: #ffebee; color: #c62828; border-left: 5px solid #e53935; 
+            padding: 10px; border-radius: 4px; margin-bottom: 12px; font-size: 12px; line-height: 1.4;
+        }}
+        .btn-container {{ display: flex; flex-direction: column; gap: 8px; margin-top: 20px; }}
+        button {{ width: 100%; padding: 12px; border: none; border-radius: 6px; font-size: 15px; font-weight: bold; cursor: pointer; }}
+        .btn-save {{ background: #00e676; color: #121212; }}
+        .btn-close {{ background: #333; color: #E0E0E0; border: 1px solid #444; }}
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Gulliver Control Deck</h1>
+        <small style="color:#666;">Hardware Parameters</small>
+    </div>
+
+    <div id="alertBanner" class="warning-banner"></div>
+
+    <form method="POST" action="/save" id="configForm">
+        <div class="section-title">Telemetry Delays</div>
+        <div class="card">
+            <div class="form-group">
+                <label>Mooring Sleep</label>
+                <select name="mooring_sleep" id="mooring_sleep" class="sleep-menu">
+                    <option value="1">1 Min</option><option value="2">2 Min</option><option value="3">3 Min</option>
+                    <option value="4">4 Min</option><option value="5">5 Min</option><option value="10">10 Min</option>
+                    <option value="20">20 Min</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Anchor Sleep</label>
+                <select name="anchor_sleep" id="anchor_sleep" class="sleep-menu">
+                    <option value="1">1 Min</option><option value="2">2 Min</option><option value="3">3 Min</option>
+                    <option value="4">4 Min</option><option value="5">5 Min</option><option value="10">10 Min</option>
+                    <option value="20">20 Min</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Travelling Sleep</label>
+                <select name="travelling_sleep" id="travelling_sleep" class="sleep-menu">
+                    <option value="1">1 Min</option><option value="2">2 Min</option><option value="3">3 Min</option>
+                    <option value="4">4 Min</option><option value="5">5 Min</option><option value="10">10 Min</option>
+                    <option value="20">20 Min</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="section-title">Operating Pipes</div>
+        <div class="card">
+            <div class="form-group">
+                <label>Logging Pipeline</label>
+                <select name="logging_mode" id="logging_mode">
+                    <option value="memory">Flash Memory</option>
+                    <option value="terminal">Serial Terminal</option>
+                    <option value="both">Both Output Pipes</option>
+                    <option value="none">Deactivated (None)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="section-title">Comms Hub</div>
+        <div class="card">
+            <div class="form-group">
+                <label>Duty Mobile</label>
+                <input type="text" name="mobile_num" id="mobile_num" value="[PHONE]">
+            </div>
+            <div class="form-group">
+                <label>SMS Throttling</label>
+                <select name="sms_alarm_trigger" id="sms_alarm_trigger">
+                    <option value="1">1st Alarm</option><option value="2">2nd Alarm</option>
+                    <option value="3">3rd Alarm</option><option value="4">4th Alarm</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>SMS on Low Battery</label>
+                <input type="checkbox" name="sms_low_batt" id="sms_low_batt" value="true" [BATT_CHK]>
+            </div>
+            <div class="form-group">
+                <label>SMS on High Temp</label>
+                <input type="checkbox" name="sms_high_temp" id="sms_high_temp" value="true" [TEMP_CHK]>
+            </div>
+        </div>
+
+        <div class="section-title">Wi-Fi Networks</div>
+        <div class="card">
+            <div id="wifi_list"></div>
+            <button type="button" class="btn-close" style="margin-top: 10px;" onclick="addWifiRow('', '')">+ Add Network</button>
+            <input type="hidden" name="wifi_payload" id="wifi_payload" value="">
+        </div>
+
+        <input type="hidden" name="portal_action" id="portal_action" value="save">
+
+        <div class="btn-container">
+            <button type="button" class="btn-save" onclick="submitPortal('save')">Save Configuration &amp; Resume</button>
+            <button type="button" class="btn-close" onclick="submitPortal('close')">Discard Changes &amp; Resume</button>
+        </div>
+    
+        <div class="section-title">Diagnostics</div>
+        <div class="card">
+            <button type="button" class="btn-close" onclick="window.location.href='/viewLogs'">View Telemetry Logs</button>
+        </div>  
+        
+    </form>
+
+    <script>
+        document.getElementById('mooring_sleep').value = "[M_SLEEP]";
+        document.getElementById('anchor_sleep').value = "[A_SLEEP]";
+        document.getElementById('travelling_sleep').value = "[T_SLEEP]";
+        document.getElementById('logging_mode').value = "[LOG_MODE]";
+        document.getElementById('sms_alarm_trigger').value = "[SMS_TRIG]";
+
+        const alertBanner = document.getElementById('alertBanner');
+        const sleepMenus = document.querySelectorAll('.sleep-menu');
+        const logMenu = document.getElementById('logging_mode');
+        const mobileInput = document.getElementById('mobile_num');
+        const initialMobileValue = mobileInput.value;
+
+        // --- WI-FI MANAGEMENT LOGIC ---
+        // Python will inject the JSON object into this tag
+        let networks = [NETWORKS_JSON]; 
+        const wifiList = document.getElementById('wifi_list');
+
+        function addWifiRow(ssid, password) {
+            const row = document.createElement('div');
+            row.className = 'form-group';
+            row.style.gap = '5px';
+            row.innerHTML = `
+                <input type="text" placeholder="SSID" class="wifi-ssid" value="${ssid}" style="width: 45%; text-align: left;">
+                <input type="text" placeholder="Password" class="wifi-pass" value="${password}" style="width: 45%; text-align: left;">
+                <button type="button" onclick="this.parentElement.remove()" style="width: 10%; padding: 8px; background: #c62828; color: #fff; border: none; border-radius: 4px;">X</button>
+            `;
+            wifiList.appendChild(row);
+        }
+
+        // Populate existing networks on load
+        for (let ssid in networks) {
+            addWifiRow(ssid, networks[ssid]);
+        }
+
+        // Bundle everything back into a JSON string right before submitting
+        function packageWifiData() {
+            let compiledNetworks = {};
+            const rows = wifiList.children;
+            for (let i = 0; i < rows.length; i++) {
+                let s = rows[i].querySelector('.wifi-ssid').value.trim();
+                let p = rows[i].querySelector('.wifi-pass').value.trim();
+                if (s !== "") compiledNetworks[s] = p;
+            }
+            document.getElementById('wifi_payload').value = JSON.stringify(compiledNetworks);
+        }
+
+        function evaluateSafetyWarnings() {
+            let warningMessages = [];
+            let shortSleepDetected = false;
+
+            sleepMenus.forEach(menu => { if (parseInt(menu.value) <= 2) shortSleepDetected = true; });
+
+            if (shortSleepDetected) {
+                warningMessages.push("<strong>POWER & NETWORK WARNING:</strong> Intervals &le; 2 minutes cause rapid battery drain and heavily increase <strong>carrier netblock risks</strong> from connection flooding.");
+            }
+            if (logMenu.value === "memory" || logMenu.value === "both") {
+                warningMessages.push("<strong>HARDWARE WEAR NOTE:</strong> Writing logs to flash memory causes sector degradation long-term.");
+            }
+            if (mobileInput.value !== initialMobileValue && mobileInput.value.trim() !== "") {
+                warningMessages.push("<strong>HANDSHAKE QUEUED:</strong> Changing number triggers an immediate cellular verification call/SMS upon saving.");
+            }
+
+            if (warningMessages.length > 0) {
+                alertBanner.innerHTML = warningMessages.join("<br><br>");
+                alertBanner.style.display = "block";
+            } else {
+                alertBanner.style.display = "none";
+            }
+        }
+
+        sleepMenus.forEach(el => el.addEventListener('change', evaluateSafetyWarnings));
+        logMenu.addEventListener('change', evaluateSafetyWarnings);
+        mobileInput.addEventListener('input', evaluateSafetyWarnings);
+        evaluateSafetyWarnings();
+
+        function submitPortal(actionType) {
+            if (actionType === 'save') {
+                packageWifiData(); // Execute the Wi-Fi bundling script
+            }
+            document.getElementById('portal_action').value = actionType;
+            document.getElementById('configForm').submit();
+        }
+    </script>
+</body>
+</html>

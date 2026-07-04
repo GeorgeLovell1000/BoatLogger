@@ -1,0 +1,10 @@
+{
+    "system": {
+        "api_key": "YOUR_API_SECRET_KEY",
+        "hardware_version": "v1",
+        "APN": "your_apn_here"
+    },
+    "networks": {
+        "YOUR_WIFI_SSID": "YOUR_WIFI_PASSWORD"
+    }
+}
