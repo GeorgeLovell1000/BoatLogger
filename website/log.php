@@ -1,3 +1,4 @@
+PHP
 <?php
 date_default_timezone_set('Europe/London');
 
@@ -7,25 +8,16 @@ $db_user = 'YOUR_DB_USER';
 $db_pass = 'YOUR_DB_PASSWORD';
 $db_name = 'YOUR_DB_NAME';
 
-
-$secret_key = "YOUR_PRIMARY_API_KEY";
 // --- DUAL-KEY SECURITY CHECK ---
-//$primary_key = "YOUR_PRIMARY_API_KEY";
-$legacy_key  = "YOUR_LEGACY_API_KEY"; // TODO: Delete after updating boat this weekend
+$secret_key = "YOUR_PRIMARY_API_KEY";
+$legacy_key = "YOUR_LEGACY_API_KEY";
 
 $incoming_key = $_REQUEST['key'] ?? '';
 
 if ($incoming_key !== $secret_key && $incoming_key !== $legacy_key) {
     header('HTTP/1.0 403 Forbidden');
-    die("Unauthorized - Key Mismatch, idiot");
+    die("Unauthorized - Key Mismatch");
 }
-
-//if ($incoming_key !== $primary_key && $incoming_key !== $legacy_key) {
-//    header('HTTP/1.0 403 Forbidden');
-//    die("Unauthorized - Key Mismatch, idiot");
-//}
-
-
 
 // --- DATABASE CONNECTION ---
 $conn = new mysqli($db_host, $db_user, $db_pass, $db_name);
@@ -33,14 +25,8 @@ if ($conn->connect_error) {
     die("Database Connection failed: " . $conn->connect_error); 
 }
 
-// --- SINGLE SECURITY CHECK ---
-if (!isset($_REQUEST['key']) || $_REQUEST['key'] !== $secret_key) {
-    header('HTTP/1.0 403 Forbidden');
-    die("Unauthorized - Key Mismatch");
-}
-
 // --- DATA PREPARATION ---
-$device_id = $_REQUEST['device_id'] ?? 'YOUR_BOAT_ID';
+$device_id = strtolower($_REQUEST['device_id'] ?? 'unknown'); // Force lowercase and init
 
 $uptime  = $_REQUEST['uptime']  ?? 0;
 $success = $_REQUEST['success'] ?? 0;
@@ -133,8 +119,8 @@ if ($is_delayed === 0) {
 // --- 3. DYNAMIC COMMAND DOWNLINK PACKING ---
 $response = [
     "status" => "success",
-    "device_acknowledged" => $device_id, 
-    "received_link" => $link
+    "device_acknowledged" => $device_id,
+    "received_link" => "verified"
 ];
 
 if (!empty($control_data)) {

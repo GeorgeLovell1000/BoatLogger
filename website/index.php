@@ -79,9 +79,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action'])) {
 // Load baseline live location metrics
 if (file_exists($json_file)) {
     $boat = json_decode(file_get_contents($json_file), true);
+    $is_fallback = false;
 } else {
-    $boat = ['lat'=>0.00000, 'lng'=>0.00000, 'status'=>'moored', 'temp'=>0, 'hum'=>0, 'voltage'=>'13.20', 'link'=>'none', 'last_seen'=>date("Y-m-d H:i:s"), 'mooring_sleep_sec'=>300, 'travelling_sleep_sec'=>60, 'anchor_sleep_sec'=>120];
+$boat = [
+        'lat' => 0.00000, 
+        'lng' => 0.00000, 
+        'status' => 'offline', 
+        'temp' => 0, 
+        'hum' => 0, 
+        'pressure' => 0,
+        'modem_temp' => 0,
+        'voltage' => '0.00', 
+        'link' => 'none', 
+        'last_seen' => 'Waiting for data...', 
+        'mooring_sleep_sec' => 300, 
+        'travelling_sleep_sec' => 60, 
+        'anchor_sleep_sec' => 120
+    ];
+    $is_fallback = true;
 }
+
 
 // Pre-populate system controls using current active values or historical down-link logs
 if (file_exists($control_file)) {
