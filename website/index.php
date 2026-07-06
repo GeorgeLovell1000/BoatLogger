@@ -400,7 +400,7 @@ if (file_exists($control_file)) {
                 <button id="btn-24h" onclick="changeHistoryWindow(24)">24 Hours</button>
             </div>
             
-            <button onclick="window.open('viewlogs.php?device_id=' + (localStorage.getItem('activeVessel') || 'YOUR_BOAT_ID'), '_blank')" 
+            <button onclick="window.open('viewlogs.php?device_id=' + CURRENT_TAB_VESSEL, '_blank')"            
                     style="width:100%; margin-top:10px; padding:8px; background: #222b45; color: white; border: 1px solid var(--panel-bg); font-weight: bold; border-radius: 4px; cursor: pointer; transition: background 0.2s;" 
                     onmouseover="this.style.background='var(--text)'" 
                     onmouseout="this.style.background='#222b45'">
@@ -488,6 +488,7 @@ if (file_exists($control_file)) {
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
     
+    const CURRENT_TAB_VESSEL = "<?php echo htmlspecialchars($vessel); ?>";    
 // --- ALARM SYSTEM STATE ---
     var isAlarmActive = false;
     var alarmAcknowledgedForCurrentEvent = false;
@@ -746,8 +747,7 @@ if (file_exists($control_file)) {
 	async function commitControlBuffer() {
         var btn = document.getElementById('save-boat-btn');
         let cleanedAttempt = "";
-        const vessel = localStorage.getItem('activeVessel') || 'YOUR_BOAT_ID';
-
+        const vessel = CURRENT_TAB_VESSEL;
         // 1. Check if this specific browser already holds a valid authorization pass
         let isAlreadyAuthorized = localStorage.getItem('YOUR_BOAT_ID_authorized') === 'true';
 
@@ -867,7 +867,7 @@ if (file_exists($control_file)) {
 
     async function fetchLatestData() {
         try {
-            const vessel = localStorage.getItem('activeVessel') || 'YOUR_BOAT_ID';
+            const vessel = CURRENT_TAB_VESSEL;
             let dataUrl = (vessel === 'YOUR_BOAT_ID') ? 'boat_data.json' : 'boat_data_' + vessel + '.json';
             let response = await fetch(dataUrl + '?nocache=' + Date.now());
             
@@ -1092,7 +1092,7 @@ if (file_exists($control_file)) {
 
     async function fetchHistoricalTracer() {
         try {
-            const vessel = localStorage.getItem('activeVessel') || 'YOUR_BOAT_ID';
+            const vessel = CURRENT_TAB_VESSEL;
             let response = await fetch('get_history.php?hours=' + activeHistoryHours + '&device_id=' + vessel + '&nocache=' + Date.now());
             if (!response.ok) return;
             let points = await response.json();
@@ -1148,12 +1148,19 @@ if (file_exists($control_file)) {
 	
 	// Initialize dropdown from saved state and ensure URL parameter matches
     window.onload = function() {
-        const savedVessel = localStorage.getItem('activeVessel') || 'YOUR_BOAT_ID';
-        document.getElementById('activeVessel').value = savedVessel;
-        
         const urlParams = new URLSearchParams(window.location.search);
-        if(urlParams.get('device_id') !== savedVessel) {
+        let urlVessel = urlParams.get('device_id');
+
+        if (!urlVessel) {
+            // If someone just types YOUR_DOMAIN_OR_IP, pull their last viewed boat
+            const savedVessel = localStorage.getItem('activeVessel') || 'YOUR_BOAT_ID';
             window.location.href = 'index.php?device_id=' + savedVessel;
+        } else {
+            // Otherwise, make sure the UI dropdown matches the URL of this specific tab
+            document.getElementById('activeVessel').value = urlVessel;
+            
+            // Save this as the "last viewed" for the NEXT time they open a blank tab
+            localStorage.setItem('activeVessel', urlVessel);
         }
     };
 
